@@ -11,9 +11,13 @@ import signal
 
 
 shouldRun = True
+pool = None
 
 def exit_gracefully(sig, frame):
+    print("Tests will stop")
     shouldRun = False
+    if pool is not None:
+        pool.terminate()
     sys.exit(0)
 
 
@@ -87,6 +91,7 @@ def dispatch_stress():
     processes = cpu_count()
     pool = Pool(processes)
     pool.map_async(load, range(processes))
+    pool.close()
 
 
 if __name__ == '__main__':
@@ -102,9 +107,15 @@ if __name__ == '__main__':
 
     prog_args = sys.argv[sys.argv.index(args.command)+1:]
 
-    signal.signal(signal.SIGINT, exit_gracefully)
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
 
     if args.stress:
         dispatch_stress()
 
+    signal.signal(signal.SIGINT, exit_gracefully)
+
     start_test(args, args.command, prog_args)
+
+    if pool is not None:
+        pool.terminate()
+
