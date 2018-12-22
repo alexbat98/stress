@@ -2,6 +2,7 @@
 from __future__ import print_function
 from multiprocessing import Pool
 from multiprocessing import cpu_count
+from contextlib import contextmanager
 import signal
 import argparse
 import sys
@@ -26,6 +27,7 @@ def load(x):
         x*x
 
 
+@contextmanager
 def start_test(options, command, prog_args):
     call = [command]
     call.extend(prog_args)
@@ -56,19 +58,19 @@ def start_test(options, command, prog_args):
         print("Process ID was %i" % (pid))
 
         if ret == 0 and re.search(success_pattern, out) is not None:
-            print("Success")
+            print("\033[30;42mSuccess\033[0m")
         elif ret == 0 and ((fail_pattern.search(out) is not None) or (fail_pattern.search(err) is not None)):
-            print("Assume fail. Return code is 0, but fail output")
+            print("\033[30;43mAssume fail. Return code is 0, but fail output\033[0m")
             shouldPrint = True
             failed = True
         elif ret == 0:
-            print("Assume success. Return code is 0, but no success output")
+            print("\033[30;43mAssume success. Return code is 0, but no success output\033[0m")
         elif ret != 0 and ((fail_pattern.search(out) is not None) or (fail_pattern.search(err) is not None)):
-            print("Fail")
+            print("\033[30;41mFail\033[0m")
             shouldPrint = True
             failed = True
         elif ret != 0:
-            print("Assume fail. Return code is non-zero, but no fail output")
+            print("\033[30;43mAssume fail. Return code is non-zero, but no fail output\033[0m")
             shouldPrint = True
             failed = True
 
@@ -76,7 +78,7 @@ def start_test(options, command, prog_args):
             print(out)
             print(err, file=sys.stderr)
 
-        print("---------\n")
+        print("~~~~~~~~~\n")
 
         if failed and options.stop_on_fail:
             break
